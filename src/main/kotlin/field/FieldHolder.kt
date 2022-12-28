@@ -63,30 +63,31 @@ class FieldHolder(
 
     private fun checkAround(hor: Int, vert: Int): Boolean {
         val field = gameField
+        val player = field[hor][vert]
         // по горизонтали
         if (((vert + 3) <= field.size) &&
-            (field[hor][vert] == field[hor][vert + 1]) &&
-            (field[hor][vert] == field[hor][vert + 2])
+            (player == field[hor][vert + 1]) &&
+            (player == field[hor][vert + 2])
         ) {
             return true
             // по вертикали
         } else if (hor + 3 <= field.size &&
-            field[hor][vert] == field[hor + 1][vert] &&
-            field[hor][vert] == field[hor + 2][vert]
+            player == field[hor + 1][vert] &&
+            player == field[hor + 2][vert]
         ) {
             return true
             // по диагонали вправо
         } else if (hor + 3 <= field.size &&
             (vert + 3) <= field.size &&
-            field[hor][vert] == field[hor + 1][vert + 1] &&
-            field[hor][vert] == field[hor + 2][vert + 2]
+            player == field[hor + 1][vert + 1] &&
+            player == field[hor + 2][vert + 2]
         ) {
             return true
             // по диагонали влево
         } else if (hor + 3 <= field.size &&
             vert >= 2 &&
-            field[hor][vert] == field[hor + 1][vert - 1] &&
-            field[hor][vert] == field[hor + 2][vert - 2]
+            player == field[hor + 1][vert - 1] &&
+            player == field[hor + 2][vert - 2]
         ) {
             return true
         }
