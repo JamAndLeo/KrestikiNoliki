@@ -13,10 +13,10 @@ class GameImpl(
 
     override fun play(): Boolean {
         fieldHolder.initializeField()// главное хранилище данных
-        val firstPlayer: GridItem = getFirstPlayer()
-        view.setSides(firstPlayer)
         showGameField()
         showRulesOfGame()
+        val firstPlayer: GridItem = getFirstPlayer()
+        view.setSides(firstPlayer)
 
         return startGame(firstPlayer)
     }
@@ -131,7 +131,12 @@ class GameImpl(
             critImpactPlayer.random()
         } else if (coordinatesImpact.size != 0) {
             coordinatesImpact.random()
-        } else coordinatesPlayer.random()
+        } else if (coordinatesPlayer.isNotEmpty()) {
+            coordinatesPlayer.random()
+        } else {
+            Random.nextInt(fieldHolder.getFieldSize()).toString() + Random.nextInt(fieldHolder.getFieldSize())
+                .toString()
+        }
 
         val first = impact[0].toString().toInt()
         val second = if (impact.length == 2) {
@@ -139,7 +144,7 @@ class GameImpl(
         } else {
             (impact[1].toString() + impact[2].toString()).toInt()
         }
-        fieldHolder.setItem(first to second, GridItem.Computer)
+        fieldHolder.setItem(second to first, GridItem.Computer)
         view.showText("COMPUTER сделал свой ход!")
     }
 
@@ -241,8 +246,8 @@ class GameImpl(
                 continue
             }
             try {
-                val first = playerText[0].toString().toInt()
-                val second = playerText[0].toString().toInt()
+                val first = playerText[0].toString().toInt() - 1
+                val second = playerText[1].toString().toInt() - 1
                 if (first > fieldHolder.getFieldSize() || second > fieldHolder.getFieldSize()) {
                     view.showText("(!) Введены недопустимые символы (!)\nПовторите ввод:")
                 } else if (fieldHolder.isCoordinatesEmpty(first, second)) {

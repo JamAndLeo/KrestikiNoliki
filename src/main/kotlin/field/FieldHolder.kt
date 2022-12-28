@@ -41,11 +41,11 @@ class FieldHolder(
     fun getFieldSize() = gameField.size
 
     fun isCoordinatesEmpty(first: Int, second: Int): Boolean {
-        return getField()[first][second] == null
+        return getField()[second][first] == null
     }
 
     fun setItem(coordinates: Pair<Int, Int>, player: GridItem) {
-        getField()[coordinates.first][coordinates.second] = player
+        getField()[coordinates.second][coordinates.first] = player
     }
 
     fun getWinner(): GridItem? {
