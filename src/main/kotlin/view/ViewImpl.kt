@@ -3,6 +3,9 @@ package view
 import model.GridItem
 
 class ViewImpl : View {
+    private var PLAYER_GRID = "X";
+    private var COMPUTER_GRID = "O";
+
     override fun showText(text: String) {
         println(text)
     }
@@ -14,7 +17,7 @@ class ViewImpl : View {
         println("-")
     }
 
-    override fun showGameField(field: MutableList<MutableList<GridItem>>, chooseSides: Map<String, GridItem>) {
+    override fun showGameField(field: MutableList<MutableList<GridItem?>>) {
         for (n in 1..field.size) { // выводит верхнюю линию
             print(" $n")
         }
@@ -22,16 +25,27 @@ class ViewImpl : View {
 
         for (n in field.indices) { // печать игровой зоны
             field[n].forEach {
-                print(
-                    "|${
-                        when (it) {
-                            GridItem.Computer -> if (chooseSides["X"] == GridItem.Computer) "X" else "O"
-                            GridItem.Empty -> " "
-                            GridItem.Player -> if (chooseSides["X"] == GridItem.Player) "X" else "O"
-                        }
-                    }"
-                )
+                print("|")
+                printSide(it)
             }.also { println("|${n + 1}") }
+        }
+    }
+
+    private fun printSide(item: GridItem?) {
+        when (item) {
+            GridItem.Computer -> print(COMPUTER_GRID)
+            GridItem.Player -> print(PLAYER_GRID)
+            else -> print(" ")
+        }
+    }
+
+    override fun setSides(firstPlayer: GridItem) {
+        if (firstPlayer == GridItem.Player) {
+            PLAYER_GRID = "X"
+            COMPUTER_GRID = "O"
+        } else {
+            PLAYER_GRID = "O"
+            COMPUTER_GRID = "X"
         }
     }
 }

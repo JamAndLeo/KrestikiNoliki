@@ -6,7 +6,9 @@ interface View {
 
     fun showText(text: String)
 
-    fun showLine(ln:Int=20)
+    fun showLine(ln: Int = 20)
 
-    fun showGameField(field: MutableList<MutableList<GridItem>>, chooseSides: Map<String, GridItem>)
+    fun showGameField(field: MutableList<MutableList<GridItem?>>)
+
+    fun setSides(firstPlayer: GridItem)
 }

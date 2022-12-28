@@ -1,70 +1,57 @@
 package game
 
+import field.FieldHolder
 import model.GridItem
 import view.View
+import java.lang.Exception
+import kotlin.random.Random
 
-class GameImpl(private val view: View) : Game {
+class GameImpl(
+    private val view: View,
+    private val fieldHolder: FieldHolder
+) : Game {
 
     override fun play(): Boolean {
-        val fieldSize = enterSizeField()
-        var gameField = createGameField(fieldSize) // главное хранилище данных
-        val chooseSides: MutableMap<String, GridItem> = mutableMapOf()
-        view.showGameField(gameField, chooseSides)
-        rulesOfGame()
-        // далее рандомный выбор старта
-        chooseSides.putAll(randomSideSelection())
-        var switch: Int = if (chooseSides["X"] == GridItem.Player) 1 else 0
+        fieldHolder.initializeField()// главное хранилище данных
+        val firstPlayer: GridItem = getFirstPlayer()
+        view.setSides(firstPlayer)
+        showGameField()
+        showRulesOfGame()
+
+        return startGame(firstPlayer)
+    }
+
+    private fun startGame(firstPlayer: GridItem): Boolean {
         // счетчик очередности хода, если 1 то ходит PLAYER, 0 - ходит компьютер
         var gameProgress = 0
 
-        // первый ход
-        if (switch == 1) {
-            gameField = playerMove(gameField)
-            view.showGameField(gameField, chooseSides)
-            view.showText("Наш боец PLAYER в кровавом углу ринга сделал свой ход")
-            view.showLine()
-            switch = 0
-            gameProgress = 1
-        } else {
-            gameField = computerFirstMove(gameField)
-            view.showGameField(gameField, chooseSides)
-            view.showText("COMPUTER сделал свой ход!")
-            view.showLine()
-            switch = 1
-            gameProgress = 1
-        }
-
         // далее (!) цикл матча
         while (true) {
-            if (switch == 1) {
-                gameField = playerMove(gameField)
-                view.showGameField(gameField, chooseSides)
-                view.showText("Наш боец PLAYER в кровавом углу ринга сделал свой ход")
-                view.showLine()
-                gameProgress++
-                if (checkWin(gameField)) {
-                    view.showText("В непримеримой борьбе за объем выпущенной крови на ходу №$gameProgress побеждает PLAYER!\nПобедитель, заберите свои золотые щепцы для выдирания ногтей. ")
-                    break
-                }
-                switch = 0
-            } else {
-                gameField = computerMove(gameField)
-                view.showGameField(gameField, chooseSides)
-                view.showText("COMPUTER сделал свой ход!")
-                view.showLine()
-                gameProgress++
-                if (checkWin(gameField)) {
-                    view.showText("На ходу №$gameProgress победу одерживает искусственный интеллект COMPUTER!")
-                    break
-                }
-                switch = 1
+            makeTurn(firstPlayer)
+            gameProgress++
+            var winner = fieldHolder.getWinner()
+            if (winner != null) {
+                showWinnerText(winner, gameProgress)
+                break
+            }
+
+            if (firstPlayer == GridItem.Computer)
+                makeTurn(GridItem.Player)
+            else makeTurn(GridItem.Computer)
+            gameProgress++
+            winner = fieldHolder.getWinner()
+            if (winner != null) {
+                showWinnerText(winner, gameProgress)
+                break
             }
         }
+
         //выбор еще одной игры
         view.showLine()
         view.showText("Может желаете ещё кого-нибудь выпотрошить? да/нет")
 
-        return when (readLine()?.trim()?.replaceFirstChar { it.lowercase() }) {
+        return when (readLine()?.trim()?.replaceFirstChar
+        { it.lowercase() }) {
             "да" -> {
                 true
             }
@@ -81,10 +68,38 @@ class GameImpl(private val view: View) : Game {
         }
     }
 
+    private fun showWinnerText(player: GridItem, gameProgress: Int) {
+        if (player == GridItem.Player)
+            view.showText("В непримеримой борьбе за объем выпущенной крови на ходу №$gameProgress побеждает PLAYER!\nПобедитель, заберите свои золотые щепцы для выдирания ногтей. ")
+        else view.showText("На ходу №$gameProgress победу одерживает искусственный интеллект COMPUTER!")
+    }
 
-    private fun computerMove(
-        field: MutableList<MutableList<GridItem>>,
-    ): MutableList<MutableList<GridItem>> {
+    private fun makeTurn(player: GridItem) {
+        if (player == GridItem.Player)
+            playerMove()
+        else computerMove()
+        showGameField()
+        view.showLine()
+    }
+
+    private fun showGameField() {
+        view.showGameField(fieldHolder.getField())
+    }
+
+    private fun getFirstPlayer(): GridItem {
+        view.showText("КРИБЛИ-КРАБЛИ-…(кто-нибудь, уберите отработанный материал с гильотины)..-БУМС:")
+        val first = if (Random.nextBoolean())
+            GridItem.Player
+        else GridItem.Computer
+
+        view.showText("На дыбах ХХ сегодня сражается и ходит первым: $first")
+        view.showText("Да начнуться пытки!!! Делайте свой первый ход!")
+        return first
+    }
+
+    private fun computerMove() {
+        val field = fieldHolder.getField()
+
         val coordinatesImpact: MutableSet<String> = mutableSetOf() // key - строка, value - столбец
         val coordinatesPlayer: MutableSet<String> = mutableSetOf()
         val critImpactComp: MutableSet<String> = mutableSetOf()
@@ -118,238 +133,128 @@ class GameImpl(private val view: View) : Game {
             coordinatesImpact.random()
         } else coordinatesPlayer.random()
 
-        //ход
-        field[impact[0].toString().toInt()][if (impact.length == 2) {
+        val first = impact[0].toString().toInt()
+        val second = if (impact.length == 2) {
             impact[1].toString().toInt()
         } else {
             (impact[1].toString() + impact[2].toString()).toInt()
-        }] = GridItem.Computer
-        return field
+        }
+        fieldHolder.setItem(first to second, GridItem.Computer)
+        view.showText("COMPUTER сделал свой ход!")
     }
 
     // собиарает свободные поля среди спареннх позиций, что можно еще прописать в будущем: 1) выявить и законтрить позицию между двумя позициями противника
-    private fun scanCritEmptyAI(field: MutableList<MutableList<GridItem>>, hor: Int, vert: Int): MutableSet<String> {
+    private fun scanCritEmptyAI(field: MutableList<MutableList<GridItem?>>, hor: Int, vert: Int): MutableSet<String> {
         val coordinates: MutableSet<String> = mutableSetOf()
 
         // по горизонтали
         if (((vert + 3) <= field.size) &&
             field[hor][vert] == field[hor][vert + 1] &&
-            field[hor][vert + 2] == GridItem.Empty
+            field[hor][vert + 2] == null
         ) coordinates.add(hor.toString() + (vert + 2).toString())
 
         if (((vert + 2) <= field.size) && vert > 0 &&
             field[hor][vert] == field[hor][vert + 1] &&
-            field[hor][vert - 1] == GridItem.Empty
+            field[hor][vert - 1] == null
         ) coordinates.add(hor.toString() + (vert - 1).toString())
 
         // по вертикали
         if (hor + 3 <= field.size &&
             field[hor][vert] == field[hor + 1][vert] &&
-            field[hor + 2][vert] == GridItem.Empty
+            field[hor + 2][vert] == null
         ) coordinates.add((hor + 2).toString() + (vert).toString())
 
         if (hor + 2 <= field.size && hor > 0 &&
             field[hor][vert] == field[hor + 1][vert] &&
-            field[hor - 1][vert] == GridItem.Empty
+            field[hor - 1][vert] == null
         ) coordinates.add((hor - 1).toString() + (vert).toString())
 
         // по диагонали вправо
         if (hor + 3 <= field.size &&
             (vert + 3) <= field.size &&
             field[hor][vert] == field[hor + 1][vert + 1] &&
-            field[hor + 2][vert + 2] == GridItem.Empty
+            field[hor + 2][vert + 2] == null
         ) coordinates.add((hor + 2).toString() + (vert + 2).toString())
 
         if (hor + 2 <= field.size &&
             (vert + 2) <= field.size && hor > 0 && vert > 0 &&
             field[hor][vert] == field[hor + 1][vert + 1] &&
-            field[hor - 1][vert - 1] == GridItem.Empty
+            field[hor - 1][vert - 1] == null
         ) coordinates.add((hor - 1).toString() + (vert - 1).toString())
 
         // по диагонали влево
         if (hor + 3 <= field.size &&
             vert >= 2 &&
             field[hor][vert] == field[hor + 1][vert - 1] &&
-            field[hor + 2][vert - 2] == GridItem.Empty
+            field[hor + 2][vert - 2] == null
         ) coordinates.add((hor + 2).toString() + (vert - 2).toString())
 
         if (hor > 0 && (vert + 2) <= field.size && hor + 2 <= field.size &&
             vert >= 1 &&
             field[hor][vert] == field[hor + 1][vert - 1] &&
-            field[hor - 1][vert + 1] == GridItem.Empty
+            field[hor - 1][vert + 1] == null
         ) coordinates.add((hor - 1).toString() + (vert + 1).toString())
         return coordinates
     }
 
     private fun scanEmptyAI(
         //собирает все свободные поля
-        field: MutableList<MutableList<GridItem>>,
+        field: MutableList<MutableList<GridItem?>>,
         hor: Int,
         ver: Int,
     ): MutableSet<String> { //согласен, выглядет безобразно
         val coordinates: MutableSet<String> = mutableSetOf()
         if (hor != 0) {         //вверх
-            if (field[hor - 1][ver] == GridItem.Empty) coordinates.add((hor - 1).toString() + ver.toString())
-            if (ver > 0 && field[hor - 1][ver - 1] == GridItem.Empty) coordinates.add((hor - 1).toString() + (ver - 1).toString())
-            if (ver + 1 < field.size && field[hor - 1][ver + 1] == GridItem.Empty) coordinates.add((hor - 1).toString() + (ver + 1).toString())
+            if (field[hor - 1][ver] == null) coordinates.add((hor - 1).toString() + ver.toString())
+            if (ver > 0 && field[hor - 1][ver - 1] == null) coordinates.add((hor - 1).toString() + (ver - 1).toString())
+            if (ver + 1 < field.size && field[hor - 1][ver + 1] == null) coordinates.add((hor - 1).toString() + (ver + 1).toString())
         }
         if (hor + 1 < field.size) {        //вниз
-            if (field[hor + 1][ver] == GridItem.Empty) coordinates.add((hor + 1).toString() + ver.toString())
-            if (ver > 0 && field[hor + 1][ver - 1] == GridItem.Empty) coordinates.add((hor + 1).toString() + (ver - 1).toString())
-            if (ver + 1 < field.size && field[hor + 1][ver + 1] == GridItem.Empty) coordinates.add((hor + 1).toString() + (ver + 1).toString())
+            if (field[hor + 1][ver] == null) coordinates.add((hor + 1).toString() + ver.toString())
+            if (ver > 0 && field[hor + 1][ver - 1] == null) coordinates.add((hor + 1).toString() + (ver - 1).toString())
+            if (ver + 1 < field.size && field[hor + 1][ver + 1] == null) coordinates.add((hor + 1).toString() + (ver + 1).toString())
         }
-        if (ver > 0 && field[ver - 1][hor] == GridItem.Empty) coordinates.add(hor.toString() + (ver - 1).toString())     //влево
-        if (ver + 1 < field.size && field[ver + 1][hor] == GridItem.Empty) coordinates.add(hor.toString() + (ver + 2).toString())  //вправо
+        if (ver > 0 && field[ver - 1][hor] == null) coordinates.add(hor.toString() + (ver - 1).toString())     //влево
+        if (ver + 1 < field.size && field[ver + 1][hor] == null) coordinates.add(hor.toString() + (ver + 2).toString())  //вправо
         return coordinates
     }
 
-    private fun computerFirstMove(field: MutableList<MutableList<GridItem>>): MutableList<MutableList<GridItem>> {
-        val range = 1..field.size
-        field[range.random() - 1][range.random() - 1] = GridItem.Computer
-        return field
-    }
-
-    private fun createGameField(fieldSize: Int): MutableList<MutableList<GridItem>> { // создает поле для игры
-        val fieldG = mutableListOf<MutableList<GridItem>>()
-        for (n in 1..fieldSize) {
-            val workLine = mutableListOf<GridItem>()
-            repeat(fieldSize) {
-                workLine.add(GridItem.Empty)
-            }
-            fieldG.add(workLine)
-        }
-        return fieldG
-    }
-
-    private fun enterSizeField(): Int { //ввод размера игрового поля
-        view.showText("Для начала давай оперделимся с размером пыточных застенков.\nСторона поля может быть от 3 до 9.\nВведи значение соразмерно своим амбициям:")
-        while (true) {
-            val x = readLine()
-            val validSize = arrayOf("3", "4", "5", "6", "7", "8", "9")
-            if (x !in validSize) {
-                view.showText("(!) кажется вы ввели недопустимый размер поля (!)")
-            } else {
-                view.showText("Договорились Малюта Скуратов. Ты будешь драться в казиматах $x на $x!")
-                return x!!.toInt()
-            }
-        }
-    }
-
-    private fun rulesOfGame() { // просто правила игры
+    private fun showRulesOfGame() { // просто правила игры
         view.showText("Давай немного расскажу о правилах игры. Как ты можешь видеть на нашем поле \nстолбцы и строки пронумерованы, когда придёт время твоего хода введи \nкоординаты установки пыточного оборудования в виде двузначного числа: \n(!)первая цифра - столбец \n(!) вторая цифра - строка\nПервым ходит всегда игрок на ХХ-дыбах. \nКому какая достанется сторона мы сейчас выберем случайно.")
     }
 
     private fun pause() = Thread.sleep(1500) // пауза если вдруг понядобиться
 
-    private fun randomSideSelection(): MutableMap<String, GridItem> {
-        view.showText("КРИБЛИ-КРАБЛИ-…(кто-нибудь, уберите отработанный материал с гильотины)..-БУМС:")
-        val players = arrayOf(GridItem.Player, GridItem.Computer)
-        val sideXX = players.random()
-        val sideOO = if (sideXX == GridItem.Player) {
-            GridItem.Computer
-        } else {
-            GridItem.Player
-        }
-        view.showText(
-            "На дыбах ХХ сегодня сражается и ходит первым: ${
-                if (sideXX == GridItem.Player) {
-                    "PLAYER"
-                } else {
-                    "COMPUTER"
-                }
-            }\nА аппонирует ему на устройствах для колесования ОО: ${
-                if (sideOO == GridItem.Player) {
-                    "PLAYER"
-                } else {
-                    "COMPUTER"
-                }
-            }"
-        )
-        view.showText("Да начнуться пытки!!! Делайте свой первый ход!")
-        return mutableMapOf("X" to sideXX, "O" to sideOO)
-    }
-
-    private fun playerMove(field: MutableList<MutableList<GridItem>>): MutableList<MutableList<GridItem>> {
+    private fun playerMove() {
         view.showText("PLAYER твой выбор:")
-        val playerEnterWORK = mutableListOf<Int>(0, 0)
-        while (true) {                             //проверка что допустимые символы
-            val playerEnter: MutableList<String> = readln().toCharArray().map { it.toString() }.toMutableList()
-            if (checkEnter(playerEnter, field.size)) {
-                playerEnter.mapIndexed { ind, x -> playerEnterWORK[ind] = x.toInt() }
-                if (checkValidEnter(playerEnterWORK, field)) break
+
+        val coordinates = getCoordinatesFromPlayer()
+        fieldHolder.setItem(coordinates, GridItem.Player)
+        view.showText("Наш боец PLAYER в кровавом углу ринга сделал свой ход")
+    }
+
+    private fun getCoordinatesFromPlayer(): Pair<Int, Int> {
+        while (true) {
+            val playerText = readln().replace(" ", "")
+            if (playerText.length != 2) {
+                view.showText("(!) Введено недопустимое количество символов (!)\nПовторите ввод:")
+                continue
             }
-        }
-        field[playerEnterWORK[1] - 1][playerEnterWORK[0] - 1] = GridItem.Player// ставим ход и подменяем позицию на поле
-        return field
-    }
-
-    private fun checkEnter(move: List<String>, size: Int): Boolean {
-        if (move.size !== 2) {
-            view.showText("(!) Введено недопустимое количество символов (!)\nПовторите ввод:")
-            return false
-        }
-        val validValue: MutableList<String> = mutableListOf()
-        for (x in 1..size) {
-            validValue.add("$x")
-        }
-        move.forEach {
-            if (it !in validValue) {
-                view.showText("(!) Введены недопустимые символы (!)\nПовторите ввод:")
-                return false
-            }
-        }
-        return true
-    }
-
-    private fun checkValidEnter(move: List<Int>, field: MutableList<MutableList<GridItem>>): Boolean {
-        if (field[move[1] - 1][move[0] - 1] !== GridItem.Empty) {
-            view.showText("(!) УПС... Кажется тут уже стоит какой-то пыточный аппарат...\nПовторите ввод:")
-            return false
-        }
-        return true
-    }
-
-    private fun checkWin(field: MutableList<MutableList<GridItem>>): Boolean {
-        for (it in field.indices) {
-            field[it].indices.forEach { ind ->
-                if (field[it][ind] == GridItem.Computer || field[it][ind] == GridItem.Player) {
-                    if (checkAround(field, it, ind)) return true
+            try {
+                val first = playerText[0].toString().toInt()
+                val second = playerText[0].toString().toInt()
+                if (first > fieldHolder.getFieldSize() || second > fieldHolder.getFieldSize()) {
+                    view.showText("(!) Введены недопустимые символы (!)\nПовторите ввод:")
+                } else if (fieldHolder.isCoordinatesEmpty(first, second)) {
+                    return first to second
+                } else {
+                    view.showText("(!) УПС... Кажется тут уже стоит какой-то пыточный аппарат...\nПовторите ввод:")
                 }
+
+            } catch (e: Exception) {
+                view.showText("(!) Введены недопустимые символы (!)\nПовторите ввод:")
             }
         }
-        return false
-    }
-
-    private fun checkAround(field: MutableList<MutableList<GridItem>>, hor: Int, vert: Int): Boolean {
-        // по горизонтали
-        if (((vert + 3) <= field.size) &&
-            (field[hor][vert] == field[hor][vert + 1]) &&
-            (field[hor][vert] == field[hor][vert + 2])
-        ) {
-            return true
-            // по вертикали
-        } else if (hor + 3 <= field.size &&
-            field[hor][vert] == field[hor + 1][vert] &&
-            field[hor][vert] == field[hor + 2][vert]
-        ) {
-            return true
-            // по диагонали вправо
-        } else if (hor + 3 <= field.size &&
-            (vert + 3) <= field.size &&
-            field[hor][vert] == field[hor + 1][vert + 1] &&
-            field[hor][vert] == field[hor + 2][vert + 2]
-        ) {
-            return true
-            // по диагонали влево
-        } else if (hor + 3 <= field.size &&
-            vert >= 2 &&
-            field[hor][vert] == field[hor + 1][vert - 1] &&
-            field[hor][vert] == field[hor + 2][vert - 2]
-        ) {
-            return true
-        }
-
-        return false
     }
 
 // 1 2 3 4
@@ -364,4 +269,3 @@ class GameImpl(private val view: View) : Game {
 //| | | | |4  3
 //----------
 }
-
