@@ -2,7 +2,7 @@ package field
 
 import model.GridItem
 import view.View
-
+// содержит все операции над полем: создание поле, подмена позиции, проверка ячеек, скан на победителя
 class FieldHolder(
     private val view: View
 ) {
@@ -27,7 +27,7 @@ class FieldHolder(
         }
     }
 
-    private fun createGameField(fieldSize: Int): MutableList<MutableList<GridItem?>> { // создает поле для игры
+    private fun createGameField(fieldSize: Int): MutableList<MutableList<GridItem?>> { // создает поле для игры, двухуровневый массив создаваем через конструктор
         val fieldG = MutableList<MutableList<GridItem?>>(fieldSize) {
             MutableList<GridItem?>(fieldSize) { null }
         }
@@ -40,19 +40,19 @@ class FieldHolder(
 
     fun getFieldSize() = gameField.size
 
-    fun isCoordinatesEmpty(first: Int, second: Int): Boolean {
+    fun isCoordinatesEmpty(first: Int, second: Int): Boolean { // проверяет пустое ли место, наверное можно использовать Pair
         return getField()[second][first] == null
     }
 
-    fun setItem(coordinates: Pair<Int, Int>, player: GridItem) {
+    fun setItem(coordinates: Pair<Int, Int>, player: GridItem) { // подменяет позицию в игровом поле
         getField()[coordinates.second][coordinates.first] = player
     }
 
     fun getWinner(): GridItem? {
         for (it in gameField.indices) {
             gameField[it].indices.forEach { ind ->
-                if (gameField[it][ind] != null) {
-                    val isWin = checkAround(it, ind)
+                if (gameField[it][ind] != null) { //проеверяет любую не пусту позицию
+                    val isWin = checkAround(it, ind) //можно впринципи вставить в if напрямую, без переменной
                     if (isWin)
                         return gameField[it][ind]
                 }
@@ -62,7 +62,7 @@ class FieldHolder(
     }
 
     private fun checkAround(hor: Int, vert: Int): Boolean {
-        val field = gameField
+        val field = gameField //а можно без локальной переменной? напрямую обращаться в условиях к gameField?
         val player = field[hor][vert]
         // по горизонтали
         if (((vert + 3) <= field.size) &&

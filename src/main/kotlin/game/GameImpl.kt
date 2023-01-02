@@ -2,27 +2,30 @@ package game
 
 import field.FieldHolder
 import model.GridItem
+import repository.RepositoryImpl
 import view.View
 import java.lang.Exception
 import kotlin.random.Random
 
 class GameImpl(
     private val view: View,
-    private val fieldHolder: FieldHolder
+    private val fieldHolder: FieldHolder,
+    private val repositoryImpl: RepositoryImpl,
 ) : Game {
 
     override fun play(): Boolean {
         fieldHolder.initializeField()// главное хранилище данных
-        showGameField()
-        showRulesOfGame()
-        val firstPlayer: GridItem = getFirstPlayer()
-        view.setSides(firstPlayer)
+        showGameField() //пропечатали поле
+        showRulesOfGame() // пропечатали правило
+        val firstPlayer: GridItem = getFirstPlayer() //получили кто на Х
+        view.setSides(firstPlayer) //отпрвили во вью кто Х а кто О
 
-        return startGame(firstPlayer)
+        return startGame(firstPlayer) //цикл матча
     }
 
     private fun startGame(firstPlayer: GridItem): Boolean {
         // счетчик очередности хода, если 1 то ходит PLAYER, 0 - ходит компьютер
+        // избавились от счетчика очередности хода
         var gameProgress = 0
 
         // далее (!) цикл матча
@@ -32,6 +35,7 @@ class GameImpl(
             var winner = fieldHolder.getWinner()
             if (winner != null) {
                 showWinnerText(winner, gameProgress)
+                repositoryImpl.saveInformation(winner)
                 break
             }
 
@@ -42,9 +46,11 @@ class GameImpl(
             winner = fieldHolder.getWinner()
             if (winner != null) {
                 showWinnerText(winner, gameProgress)
+                repositoryImpl.saveInformation(winner)
                 break
             }
         }
+
 
         //выбор еще одной игры
         view.showLine()
