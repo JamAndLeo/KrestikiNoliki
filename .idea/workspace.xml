@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1e986e90-1d6e-4189-8fed-aae7562a1e7f" name="Changes" comment="Start Version">
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/repository/Repository.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/repository/RepositoryImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/field/FieldHolder.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/field/FieldHolder.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/game/GameImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/game/GameImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/main.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/main.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataStorage.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataStorage.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/repository/RepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/repository/RepositoryImpl.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,11 +40,12 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/studyKotlin/ClassesStydy - step #3/ClassesStudy",
+    "last_opened_file_path": "C:/studyKotlin/ClassesStydy - step #3/KrestikiNoliki",
     "project.structure.last.edited": "SDKs",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "coverage"
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "inlay.hints"
   }
 }]]></component>
   <component name="RunManager">
@@ -100,7 +99,14 @@
       <option name="project" value="LOCAL" />
       <updated>1672164133927</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Start Version">
+      <created>1672652495205</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1672652495205</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
