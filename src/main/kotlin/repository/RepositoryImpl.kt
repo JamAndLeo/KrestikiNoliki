@@ -11,6 +11,7 @@ class RepositoryImpl : Repository {
     private val dataFormat = SimpleDateFormat("d MMM yyyy, EEE, HH:mm:ss z")
 
 
+
     override fun saveInformation(winner: GridItem) {
         val winPlayer = if (winner == GridItem.Player) 1 else 0
         if (fileDate.readLines().isEmpty()) {
